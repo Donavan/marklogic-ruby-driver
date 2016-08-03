@@ -35,7 +35,7 @@ module MarkLogic
         opts
       end
 
-      def to_xqy
+      def to_s
         regions = query_value(@regions)
         %Q{cts:json-property-geospatial-query("#{@name}",(#{regions}),(#{options.join(',')}),#{@weight})}
       end

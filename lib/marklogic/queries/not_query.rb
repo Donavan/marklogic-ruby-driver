@@ -5,8 +5,8 @@ module MarkLogic
         @query = query
       end
 
-      def to_xqy
-        %Q{cts:not-query(#{@query.to_xqy})}
+      def to_s
+        %Q{cts:not-query(#{@query})}
       end
     end
   end

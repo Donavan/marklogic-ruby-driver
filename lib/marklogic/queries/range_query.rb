@@ -58,7 +58,7 @@ module MarkLogic
         opts
       end
 
-      def to_xqy
+      def to_s
         value = query_value(@value, @range_type)
         %Q{cts:json-property-range-query("#{@name}","#{operator}",(#{value}),(#{options.join(',')}),#{@weight})}
       end

@@ -156,6 +156,25 @@ module MarkLogic
         # :dbname => options[:db]
     end
 
+    def run_xquery(xquery, options = {})
+      # manually building the params yielded a performance improvement
+      query = xquery.to_s
+      params = %Q{xquery=#{URI.encode_www_form_component(query)}}
+      params += %Q{&dbname=#{options[:db]}} if options[:db]
+
+      headers = {
+          'content-type' => 'application/x-www-form-urlencoded'
+      }
+
+      logger.debug(%Q{MarkLogic (xquery):  #{query}})
+      response = request('/eval', 'post', headers, params)
+
+      # :xquery => options[:query],
+      # :locale => LOCALE,
+      # :tzoffset => "-18000",
+      # :dbname => options[:db]
+    end
+
     def head(url, headers = {})
       request(url, 'head', headers)
     end

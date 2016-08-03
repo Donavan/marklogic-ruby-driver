@@ -29,7 +29,7 @@ module MarkLogic
         opts
       end
 
-      def to_xqy
+      def to_s
         values = query_value(@values)
         %Q{cts:word-query((#{values}),(#{options.join(',')}),#{@weight})}
       end

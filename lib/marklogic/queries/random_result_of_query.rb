@@ -1,12 +1,12 @@
 module MarkLogic
   module Queries
-    class DocumentFragmentQuery < BaseQuery
+    class RandomResultOfQuery < BaseQuery
       def initialize(query)
         @query = query
       end
 
       def to_s
-        %Q{cts:document-fragment-query(#{@query})}
+        %{declare variable $idx := xdmp:random(xdmp:estimate(#{@query})); #{@query}[$idx]}
       end
     end
   end

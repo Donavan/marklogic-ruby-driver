@@ -6,7 +6,7 @@ module MarkLogic
         @depth = depth
       end
 
-      def to_xqy
+      def to_s
         uris = query_value(@directory_uris)
 
         if @depth.nil?

@@ -6,8 +6,8 @@ module MarkLogic
         @negative_query = negative_query
       end
 
-      def to_xqy
-        %Q{cts:and-not-query(#{@positive_query.to_xqy},#{@negative_query.to_xqy})}
+      def to_s
+        %Q{cts:and-not-query(#{@positive_query},#{@negative_query})}
       end
     end
   end

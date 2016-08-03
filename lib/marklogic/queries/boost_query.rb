@@ -6,8 +6,8 @@ module MarkLogic
         @boosting_query = boosting_query
       end
 
-      def to_xqy
-        %Q{cts:boost-query(#{@matching_query.to_xqy},#{@boosting_query.to_xqy})}
+      def to_s
+        %Q{cts:boost-query(#{@matching_query},#{@boosting_query})}
       end
     end
   end

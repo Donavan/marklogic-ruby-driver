@@ -5,7 +5,7 @@ module MarkLogic
         @uris = uris
       end
 
-      def to_xqy
+      def to_s
         uris = query_value(@uris)
         %Q{cts:document-query((#{uris}))}
       end

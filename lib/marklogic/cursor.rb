@@ -23,7 +23,7 @@ module MarkLogic
 
     def count
       col_name = collection.nil? ? "" : %Q{"#{collection.collection}"}
-      query_to_run = %Q{xdmp:estimate(cts:search(fn:collection(#{col_name}), #{query.to_xqy}, ("unfiltered")))}
+      query_to_run = %Q{xdmp:estimate(cts:search(fn:collection(#{col_name}), #{query}, ("unfiltered")))}
       response = @connection.run_query(query_to_run, "xquery")
       raise Exception.new("Invalid response: #{response.code.to_i}: #{response.body}") if (response.code.to_i != 200)
       response.body.to_i
@@ -220,7 +220,7 @@ module MarkLogic
     end
 
     def exec
-      query = to_xqy
+      query = to_s
       response = @connection.run_query(query, "xquery")
       raise Exception.new("Invalid response: #{response.code.to_i}: #{response.body}") if (response.code.to_i != 200)
 
@@ -228,11 +228,11 @@ module MarkLogic
       response
     end
 
-    def to_xqy
+    def to_s
       start_index = start
       end_index = start_index + page_length - 1
       col_name = collection.nil? ? "" : %Q{"#{collection.collection}"}
-      %Q{(cts:search(fn:collection(#{col_name}), #{query.to_xqy}, ("unfiltered", "score-zero", #{sort_xqy})))[#{start_index} to #{end_index}]}
+      %Q{(cts:search(fn:collection(#{col_name}), #{query}, ("unfiltered", "score-zero", #{sort_xqy})))[#{start_index} to #{end_index}]}
     end
   end
 end
