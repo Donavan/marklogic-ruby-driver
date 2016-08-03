@@ -43,7 +43,8 @@ CONNECTION = MarkLogic::Connection.new(HOST, PORT)
 
 RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
-  config.fail_fast = true
+  config.filter_run_excluding :broken => true
+  config.fail_fast = ENV.fetch('FAIL_FAST', 'true').downcase == 'true'
   config.expect_with :rspec do |c|
     c.syntax = [:should, :expect]
   end

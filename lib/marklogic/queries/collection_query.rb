@@ -5,7 +5,7 @@ module MarkLogic
         @collection_uris = collection_uris
       end
 
-      def to_xqy
+      def to_s
         uris = query_value(@collection_uris)
         %Q{cts:collection-query((#{uris}))}
       end

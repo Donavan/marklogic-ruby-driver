@@ -7,8 +7,8 @@ module MarkLogic
         @options = options
       end
 
-      def to_xqy
-        %Q{cts:json-property-scope-query("#{@name}",#{@query.to_xqy})}
+      def to_s
+        %Q{cts:json-property-scope-query("#{@name}",#{@query})}
       end
     end
   end

@@ -95,7 +95,7 @@ module MarkLogic
           query = Queries::AndQuery.new()
         end
 
-        xqy = %Q{cts:search(fn:collection("#{collection}"), #{query.to_xqy}, ("unfiltered")) / xdmp:node-delete(.)}
+        xqy = %Q{cts:search(fn:collection("#{collection}"), #{query}, ("unfiltered")) / xdmp:node-delete(.)}
         response = @database.connection.run_query(xqy, "xquery")
         raise Exception.new("Invalid response: #{response.code.to_i}, #{response.body}") unless response.code.to_i == 200
       end

@@ -5,8 +5,8 @@ module MarkLogic
         @queries = args.flat_map{ |i| i }
       end
 
-      def to_xqy
-        sub_queries = @queries.map { |q| q.to_xqy }.join(',')
+      def to_s
+        sub_queries = @queries.map { |q| q.to_s }.join(',')
         %Q{cts:and-query((#{sub_queries}))}
       end
     end

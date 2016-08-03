@@ -35,7 +35,7 @@ module MarkLogic
         opts
       end
 
-      def to_xqy
+      def to_s
         value = query_value(@value)
         %Q{cts:json-property-value-query("#{@name}",(#{value}),(#{options.join(',')}),#{@weight})}
       end

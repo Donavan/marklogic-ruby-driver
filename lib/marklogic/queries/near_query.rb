@@ -21,8 +21,8 @@ module MarkLogic
         json
       end
 
-      def to_xqy
-        queries = @queries.map { |q| q.to_xqy }.join(',')
+      def to_s
+        queries = @queries.map { |q| q.to_s }.join(',')
         ordered = (@ordered == true ? %Q{"ordered"} : %Q{"unordered"}) if !@ordered.nil?
         %Q{cts:near-query((#{queries}),#{@distance},(#{ordered}),#{@distance_weight})}
       end

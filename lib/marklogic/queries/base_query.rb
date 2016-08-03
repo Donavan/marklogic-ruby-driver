@@ -1,6 +1,14 @@
 module MarkLogic
   module Queries
     class BaseQuery
+      alias_method :to_xqy, :to_s
+      #
+      # @param [ String ] response A string containing the response from the MarkLogic server to a query
+      # @param [ Hash ] opts Options for
+      #
+      def format_response(response, opts = {})
+        to_xml(response, opts)
+      end
 
       # Helper function to add a sub query into a parent query
       #
@@ -33,6 +41,25 @@ module MarkLogic
           value = %Q{"#{original_value}"}
         else
           value = original_value
+        end
+      end
+
+      private
+
+      def to_xml(response, opts)
+        return array_to_xml(response, opts) if response.class == Array
+
+        xml_proc = options.fetch(:to_xml) { proc { |xml| ::Nokogiri::XML(xml) } }
+        xml = xml_proc.call(response)
+        xml.remove_namespaces! if opts[:strip_namespace]
+        opts[:at_xpath] ? xml.at_xpath(opts[:at_xpath]) : xml
+      end
+
+      def array_to_xml(response, opts)
+        if opts[:want_array]
+          response.map { |resp| to_xml(resp, opts) }
+        else
+          to_xml(response[opts.fetch(:want_index, 0).to_i], opts)
         end
       end
     end
