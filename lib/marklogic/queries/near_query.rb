@@ -1,6 +1,6 @@
 module MarkLogic
   module Queries
-    class NearQuery< BaseQuery
+    class NearQuery < BaseQuery
       def initialize(queries, distance = 10, distance_weight = 1.0, options = {})
         @queries = queries
         @distance = distance
@@ -10,21 +10,21 @@ module MarkLogic
 
       def to_json
         json = {
-          "near-query" => {
-            "queries" => @queries.map { |q| q.to_json }
+          'near-query' => {
+            'queries' => @queries.map(&:to_json)
           }
         }
 
-        json["near-query"]["queries"].push({ "distance" => @distance }) if @distance
-        json["near-query"]["queries"].push({ "distance-weight" => @distance_weight }) if @distance_weight
-        json["near-query"]["queries"].push({ "ordered" => @ordered })
+        json['near-query']['queries'].push('distance' => @distance) if @distance
+        json['near-query']['queries'].push('distance-weight' => @distance_weight) if @distance_weight
+        json['near-query']['queries'].push('ordered' => @ordered)
         json
       end
 
       def to_s
-        queries = @queries.map { |q| q.to_s }.join(',')
-        ordered = (@ordered == true ? %Q{"ordered"} : %Q{"unordered"}) if !@ordered.nil?
-        %Q{cts:near-query((#{queries}),#{@distance},(#{ordered}),#{@distance_weight})}
+        queries = @queries.map(&:to_s).join(',')
+        ordered = (@ordered == true ? %("ordered") : %("unordered")) unless @ordered.nil?
+        %{cts:near-query((#{queries}),#{@distance},(#{ordered}),#{@distance_weight})}
       end
     end
   end

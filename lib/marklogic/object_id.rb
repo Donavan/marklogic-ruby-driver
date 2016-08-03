@@ -4,7 +4,6 @@ require 'securerandom'
 
 module MarkLogic
   class ObjectId
-
     def initialize
       @id = SecureRandom.hex
     end
@@ -33,11 +32,11 @@ module MarkLogic
       to_s == other.to_s
     end
 
-    def as_json(options=nil)
+    def as_json(_options = nil)
       to_s
     end
 
-    def to_json(options = nil)
+    def to_json(_options = nil)
       as_json.to_json
     end
 

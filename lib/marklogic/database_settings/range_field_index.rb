@@ -1,7 +1,6 @@
 module MarkLogic
   module DatabaseSettings
     class RangeFieldIndex
-
       attr_accessor :scalar_type, :field_name, :collation, :facet
 
       def initialize(field_name, options = {})
@@ -14,21 +13,21 @@ module MarkLogic
       end
 
       def key
-        %Q{#{self.class.to_s}-#{@localname}}
+        %(#{self.class}-#{@localname})
       end
 
       def append_to_db(database)
-        database.add_index("range-field-index", self)
+        database.add_index('range-field-index', self)
       end
 
-      def to_json(options = nil)
+      def to_json(_options = nil)
         {
-          "range-field-index" => {
-            "scalar-type" => @scalar_type,
-            "field-name" => @field_name,
-            "collation" => @collation,
-            "range-value-positions" => @range_value_positions,
-            "invalid-values" => @invalid_values
+          'range-field-index' => {
+            'scalar-type' => @scalar_type,
+            'field-name' => @field_name,
+            'collation' => @collation,
+            'range-value-positions' => @range_value_positions,
+            'invalid-values' => @invalid_values
           }
         }
       end

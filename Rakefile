@@ -1,26 +1,26 @@
-require "bundler/gem_tasks"
+require 'bundler/gem_tasks'
 
 require 'rspec/core/rake_task'
 require File.expand_path('../lib/marklogic/version', __FILE__)
 
 RSpec::Core::RakeTask.new
 
-task :default => :spec
+task default: :spec
 
 desc 'Builds the gem'
 task :build do
-  sh "gem build marklogic.gemspec"
+  sh 'gem build marklogic.gemspec'
 end
 
 desc 'Builds and installs the gem'
-task :install => :build do
+task install: :build do
   sh "gem install marklogic-#{MarkLogic::Version}"
 end
 
 desc 'Tags version, pushes to remote, and pushes gem'
-task :release => :build do
+task release: :build do
   sh "git tag v#{MarkLogic::Version}"
-  sh "git push origin"
-  sh "git push --tags origin"
+  sh 'git push origin'
+  sh 'git push --tags origin'
   sh "gem push marklogic-#{MarkLogic::Version}.gem"
 end

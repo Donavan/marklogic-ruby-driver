@@ -1,7 +1,6 @@
 module MarkLogic
   module DatabaseSettings
     class GeospatialElementChildIndex
-
       attr_accessor :parent_localname, :localname, :facet
 
       def initialize(parent_localname, child_localname, options = {})
@@ -15,24 +14,24 @@ module MarkLogic
       end
 
       def key
-        %Q{#{self.class.to_s}-#{@localname}}
+        %(#{self.class}-#{@localname})
       end
 
       def append_to_db(database)
-        database.add_index("geospatial-element-child-index", self)
+        database.add_index('geospatial-element-child-index', self)
       end
 
-      def to_json(options = nil)
+      def to_json(_options = nil)
         {
-          "geospatial-element-child-index" => {
-            "parent-namespace-uri" => "",
-            "parent-localname" => @parent_localname,
-            "namespace-uri" => "",
-            "localname" => @localname,
-            "coordinate-system" => @coordinate_system,
-            "point-format" => @point_format,
-            "range-value-positions" => @range_value_positions,
-            "invalid-values" => @invalid_values
+          'geospatial-element-child-index' => {
+            'parent-namespace-uri' => '',
+            'parent-localname' => @parent_localname,
+            'namespace-uri' => '',
+            'localname' => @localname,
+            'coordinate-system' => @coordinate_system,
+            'point-format' => @point_format,
+            'range-value-positions' => @range_value_positions,
+            'invalid-values' => @invalid_values
           }
         }
       end

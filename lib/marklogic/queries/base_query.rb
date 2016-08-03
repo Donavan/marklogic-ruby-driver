@@ -1,7 +1,7 @@
 module MarkLogic
   module Queries
     class BaseQuery
-      alias_method :to_xqy, :to_s
+      alias to_xqy to_s
       #
       # @param [ String ] response A string containing the response from the MarkLogic server to a query
       # @param [ Hash ] opts Options for
@@ -29,19 +29,19 @@ module MarkLogic
       #
       # @since 1.0.0
       def query_value(original_value, type = nil)
-        if original_value.kind_of?(Array)
-          value = original_value.map { |v| query_value(v) }.join(',')
-        elsif original_value.kind_of?(TrueClass)
-          value = 'fn:true()'
-        elsif original_value.kind_of?(FalseClass)
-          value = 'fn:false()'
-        elsif original_value.kind_of?(ObjectId)
-          value = %Q{"#{original_value.to_s}"}
-        elsif original_value.kind_of?(String) || type == "string"
-          value = %Q{"#{original_value}"}
-        else
-          value = original_value
-        end
+        value = if original_value.is_a?(Array)
+                  original_value.map { |v| query_value(v) }.join(',')
+                elsif original_value.is_a?(TrueClass)
+                  'fn:true()'
+                elsif original_value.is_a?(FalseClass)
+                  'fn:false()'
+                elsif original_value.is_a?(ObjectId)
+                  %("#{original_value}")
+                elsif original_value.is_a?(String) || type == 'string'
+                  %("#{original_value}")
+                else
+                  original_value
+                end
       end
 
       private

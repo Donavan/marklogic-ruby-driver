@@ -8,27 +8,25 @@ module MarkLogic
         @weight = @options.delete(:weight) || 1.0
       end
 
-      def options=(opts)
-        @options = opts
-      end
+      attr_writer :options
 
       def options
         opts = []
         @options.each do |k, v|
-          dashed_key = k.to_s.gsub(/_/, '-')
+          dashed_key = k.to_s.tr('_', '-')
           case k.to_s
-          when "coordinate_system", "units", "type", "score_function", "slope_factor"
-            opts << %Q{"#{dashed_key}=#{v}"}
+          when 'coordinate_system', 'units', 'type', 'score_function', 'slope_factor'
+            opts << %("#{dashed_key}=#{v}")
           when /(boundaries)_included/
-            opts << (v == true ? %Q{"#{$1}-included"} : %Q{"#{$1}-excluded"})
+            opts << (v == true ? %("#{Regexp.last_match(1)}-included") : %("#{Regexp.last_match(1)}-excluded"))
           when /([a-z\-]+_excluded)/
-            opts << %Q{"#{dashed_key}"}
-          when "cached"
-            opts << (v == true ? %Q{"cached"} : %Q{"uncached"})
-          when "zero", "synonym"
-            opts << %Q{"#{dashed_key}"}
-          # else
-          #   opts << %Q{"#{v}"}
+            opts << %("#{dashed_key}")
+          when 'cached'
+            opts << (v == true ? %("cached") : %("uncached"))
+          when 'zero', 'synonym'
+            opts << %("#{dashed_key}")
+            # else
+            #   opts << %Q{"#{v}"}
           end
         end
 
@@ -37,7 +35,7 @@ module MarkLogic
 
       def to_s
         regions = query_value(@regions)
-        %Q{cts:json-property-geospatial-query("#{@name}",(#{regions}),(#{options.join(',')}),#{@weight})}
+        %{cts:json-property-geospatial-query("#{@name}",(#{regions}),(#{options.join(',')}),#{@weight})}
       end
     end
   end

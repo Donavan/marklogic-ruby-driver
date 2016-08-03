@@ -6,10 +6,10 @@ module MarkLogic
     def initialize(forest_name, host_name = nil, conn = nil)
       self.connection = conn
       @forest_name = forest_name
-      @host_name = host_name || self.manage_connection.host
+      @host_name = host_name || manage_connection.host
       @options = {
-        "forest-name" => @forest_name,
-        "host" => @host_name
+        'forest-name' => @forest_name,
+        'host' => @host_name
       }
     end
 
@@ -20,7 +20,7 @@ module MarkLogic
     end
 
     def load
-      resp = manage_connection.get(%Q{/manage/v2/forests/#{forest_name}/properties?format=json})
+      resp = manage_connection.get(%(/manage/v2/forests/#{forest_name}/properties?format=json))
       if resp.code.to_i == 200
         options = Oj.load(resp.body)
         options.each do |key, value|
@@ -38,7 +38,7 @@ module MarkLogic
     end
 
     def has_key?(key)
-      @options.has_key?(key)
+      @options.key?(key)
     end
 
     def database=(db)
@@ -48,16 +48,17 @@ module MarkLogic
 
     def create
       r = manage_connection.post_json(
-        %Q{/manage/v2/forests?format=json},
-        @options)
+        %(/manage/v2/forests?format=json),
+        @options
+      )
     end
 
     def exists?
-      manage_connection.head(%Q{/manage/v2/forests/#{forest_name}}).code.to_i == 200
+      manage_connection.head(%(/manage/v2/forests/#{forest_name})).code.to_i == 200
     end
 
     def drop
-      r = manage_connection.delete(%Q{/manage/v2/forests/#{forest_name}?level=full&format=json})
+      r = manage_connection.delete(%(/manage/v2/forests/#{forest_name}?level=full&format=json))
     end
   end
 end

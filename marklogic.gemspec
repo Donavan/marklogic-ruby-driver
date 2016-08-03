@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = MarkLogic::Version
   spec.authors       = ['Paxton Hare']
   spec.email         = ['paxton@greenllama.com']
-  spec.summary       = %q{A Ruby Driver for MarkLogic}
-  spec.description   = %q{A Ruby Driver for MarkLogic}
+  spec.summary       = 'A Ruby Driver for MarkLogic'
+  spec.description   = 'A Ruby Driver for MarkLogic'
   spec.homepage      = 'https://github.com/paxtonhare/marklogic-ruby-driver'
   spec.license       = 'MIT'
 
@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
-  spec.has_rdoc        = 'yard'
+  spec.has_rdoc = 'yard'
 
   spec.add_runtime_dependency 'net-http-persistent', '~> 2.9', '>= 2.9.4'
   spec.add_runtime_dependency 'oj', '~> 2.12', '>= 2.12.2'

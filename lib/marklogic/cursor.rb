@@ -22,10 +22,10 @@ module MarkLogic
     end
 
     def count
-      col_name = collection.nil? ? "" : %Q{"#{collection.collection}"}
-      query_to_run = %Q{xdmp:estimate(cts:search(fn:collection(#{col_name}), #{query}, ("unfiltered")))}
-      response = @connection.run_query(query_to_run, "xquery")
-      raise Exception.new("Invalid response: #{response.code.to_i}: #{response.body}") if (response.code.to_i != 200)
+      col_name = collection.nil? ? '' : %("#{collection.collection}")
+      query_to_run = %{xdmp:estimate(cts:search(fn:collection(#{col_name}), #{query}, ("unfiltered")))}
+      response = @connection.run_query(query_to_run, 'xquery')
+      raise Exception, "Invalid response: #{response.code.to_i}: #{response.body}" if response.code.to_i != 200
       response.body.to_i
     end
 
@@ -39,24 +39,22 @@ module MarkLogic
 
       return nil if @visited == @limit
 
-      if @cache.length == 0
+      if @cache.length.zero?
         if page < total_pages
           self.page = page + 1
           refresh
         end
 
-        if @cache.length == 0
-          return nil
-        end
+        return nil if @cache.length.zero?
       end
 
-      @visited = @visited + 1
+      @visited += 1
       doc = @cache.shift
 
       # TODO: Move this server side
       if @fields
         @fields << :_id unless @fields.include?(:_id) || @fields.include?('_id')
-        doc = @fields.each_with_object(doc.class.new) { |key, result| result[key] = doc[key.to_s] if doc.has_key?(key.to_s) }
+        doc = @fields.each_with_object(doc.class.new) { |key, result| result[key] = doc[key.to_s] if doc.key?(key.to_s) }
       end
 
       if @transformer.nil?
@@ -65,21 +63,21 @@ module MarkLogic
         @transformer.call(doc) if doc
       end
     end
-    alias_method :next_document, :next
+    alias next_document next
 
     def convert_fields_for_query(fields)
       case fields
-        when String, Symbol
-          [ fields ]
-        when Array
-          return nil if fields.length.zero?
-          fields
-        when Hash
-          return fields.keys
+      when String, Symbol
+        [fields]
+      when Array
+        return nil if fields.length.zero?
+        fields
+      when Hash
+        return fields.keys
       end
     end
 
-    def each(&block)
+    def each
       while doc = self.next
         yield doc
       end
@@ -123,16 +121,14 @@ module MarkLogic
     end
 
     def view
-      "none"
+      'none'
     end
 
     def format
-      @options[:format] || "json"
+      @options[:format] || 'json'
     end
 
-    def collection
-      @collection
-    end
+    attr_reader :collection
 
     def return_results
       @options[:return_results] || false
@@ -155,7 +151,7 @@ module MarkLogic
     end
 
     def has_sort?
-      @options.has_key?(:sort) || @options.has_key?(:order)
+      @options.key?(:sort) || @options.key?(:order)
     end
 
     def query
@@ -170,42 +166,41 @@ module MarkLogic
 
       sorters.map do |sorter|
         name = sorter[0].to_s
-        direction = (sorter[1] && (sorter[1] == -1)) ? "descending" : "ascending"
-
+        direction = sorter[1] && (sorter[1] == -1) ? 'descending' : 'ascending'
 
         if @collection.database.has_range_index?(name)
           index = @collection.database.range_index(name)
-          type = %Q{xs:#{index.scalar_type}}
+          type = %(xs:#{index.scalar_type})
           collation = index.collation
         else
-          raise MissingIndexError.new("Missing index on #{name}")
+          raise MissingIndexError, "Missing index on #{name}"
         end
         {
-          "direction" => direction || "ascending",
-          "type" => type,
-          "collation" => collation || "",
-          "json-property" => name
+          'direction' => direction || 'ascending',
+          'type' => type,
+          'collation' => collation || '',
+          'json-property' => name
         }
       end
     end
 
     def sort_xqy
-      return %Q{cts:unordered()} unless has_sort?
+      return %{cts:unordered()} unless has_sort?
 
       sorters = @options[:sort] || @options[:order]
       sorters = [sorters] unless sorters.instance_of?(Array)
 
       sorters.map do |sorter|
         name = sorter[0].to_s
-        direction = (sorter[1] && (sorter[1] == -1)) ? "descending" : "ascending"
+        direction = sorter[1] && (sorter[1] == -1) ? 'descending' : 'ascending'
 
         unless @collection.database.has_range_index?(name)
-          raise MissingIndexError.new("Missing index on #{name}")
+          raise MissingIndexError, "Missing index on #{name}"
         end
 
         ref = @collection.database.range_index(name).to_ref
 
-        %Q{cts:index-order(#{ref}, "#{direction}")}
+        %{cts:index-order(#{ref}, "#{direction}")}
       end.join(',')
     end
 
@@ -221,8 +216,8 @@ module MarkLogic
 
     def exec
       query = to_s
-      response = @connection.run_query(query, "xquery")
-      raise Exception.new("Invalid response: #{response.code.to_i}: #{response.body}") if (response.code.to_i != 200)
+      response = @connection.run_query(query, 'xquery')
+      raise Exception, "Invalid response: #{response.code.to_i}: #{response.body}" if response.code.to_i != 200
 
       @query_run = true
       response
@@ -231,8 +226,8 @@ module MarkLogic
     def to_s
       start_index = start
       end_index = start_index + page_length - 1
-      col_name = collection.nil? ? "" : %Q{"#{collection.collection}"}
-      %Q{(cts:search(fn:collection(#{col_name}), #{query}, ("unfiltered", "score-zero", #{sort_xqy})))[#{start_index} to #{end_index}]}
+      col_name = collection.nil? ? '' : %("#{collection.collection}")
+      %{(cts:search(fn:collection(#{col_name}), #{query}, ("unfiltered", "score-zero", #{sort_xqy})))[#{start_index} to #{end_index}]}
     end
   end
 end

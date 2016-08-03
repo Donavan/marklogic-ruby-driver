@@ -7,35 +7,34 @@ module MarkLogic
     def initialize(app_name, options = {})
       @app_name = app_name
       self.connection = options[:connection]
-      @port = options[:port] || self.connection.port
+      @port = options[:port] || connection.port
       self.admin_connection = options[:admin_connection]
     end
 
     def create
-      logger.debug(%Q{Creating Application: #{@app_name}})
+      logger.debug(%(Creating Application: #{@app_name}))
 
       build_implicit_defs
 
-      databases.each do |database_name, database|
-        unless database.exists?
-          database.create
-        else
+      databases.each do |_database_name, database|
+        if database.exists?
           database.update
+        else
+          database.create
         end
       end
 
-      forests.each do |forest_name, forest|
+      forests.each do |_forest_name, forest|
         forest.create unless forest.exists?
       end
 
-      app_servers.each do |server_name, app_server|
-        unless app_server.exists?
-          app_server.create
-        else
+      app_servers.each do |_server_name, app_server|
+        if app_server.exists?
           app_server.update
+        else
+          app_server.create
         end
       end
-
     end
 
     def create_indexes
@@ -59,43 +58,39 @@ module MarkLogic
     end
 
     def drop
-      logger.debug(%Q{Dropping Application: #{@app_name}})
+      logger.debug(%(Dropping Application: #{@app_name}))
 
       build_implicit_defs
 
-      app_servers.each do |server_name, app_server|
+      app_servers.each do |_server_name, app_server|
         app_server.drop if app_server.exists?
       end
 
-      databases.each do |database_name, database|
-        if database.exists?
-          database.drop
-        end
+      databases.each do |_database_name, database|
+        database.drop if database.exists?
       end
 
-      forests.each do |forest_name, forest|
-        if forest.exists?
-          forest.drop
-        end
+      forests.each do |_forest_name, forest|
+        forest.drop if forest.exists?
       end
     end
 
     def exists?
       build_implicit_defs
 
-      databases.each do |database_name, database|
-        return false if !database.exists?
+      databases.each do |_database_name, database|
+        return false unless database.exists?
       end
 
-      forests.each do |forest_name, forest|
-        return false if !forest.exists?
+      forests.each do |_forest_name, forest|
+        return false unless forest.exists?
       end
 
-      app_servers.each do |server_name, app_server|
-        return false if !app_server.exists?
+      app_servers.each do |_server_name, app_server|
+        return false unless app_server.exists?
       end
 
-      return true
+      true
     end
 
     def stale?
@@ -129,7 +124,7 @@ module MarkLogic
         end
       end
 
-      return false
+      false
     end
 
     def forests
@@ -148,10 +143,8 @@ module MarkLogic
       indexes[index.key] = index
     end
 
-    def clear_indexes()
-      content_databases.each do |database|
-        database.reset_indexes
-      end
+    def clear_indexes
+      content_databases.each(&:reset_indexes)
       @indexes = {}
     end
 
@@ -168,7 +161,7 @@ module MarkLogic
     end
 
     def database(name)
-      database = MarkLogic::Database.new(name, self.connection)
+      database = MarkLogic::Database.new(name, connection)
       database.application = self
       databases[name] = database
       yield(database) if block_given?
@@ -189,8 +182,8 @@ module MarkLogic
       as_nice_string = [
         " app_name: #{app_name.inspect}",
         " port: #{port.inspect}",
-        " app_servers: #{app_servers.values.each { |app_server| app_server.inspect }}"
-      ].join(",")
+        " app_servers: #{app_servers.values.each(&:inspect)}"
+      ].join(',')
       "#<#{self.class}#{as_nice_string}>"
     end
 
@@ -210,12 +203,12 @@ module MarkLogic
     private
 
     def load_database(db_name)
-      db = MarkLogic::Database.load(db_name, self.connection)
+      db = MarkLogic::Database.load(db_name, connection)
       db.application = self
       databases[db_name] = db
 
       db['forest'].each do |forest_name|
-        forests[forest_name] = MarkLogic::Forest.load(forest_name, nil, self.connection) unless forests.has_key?(forest_name)
+        forests[forest_name] = MarkLogic::Forest.load(forest_name, nil, connection) unless forests.key?(forest_name)
         forests[forest_name].database = db
       end
     end
@@ -223,30 +216,30 @@ module MarkLogic
     def load_databases
       app_servers.each_value do |app_server|
         db_name = app_server['content-database']
-        load_database(db_name) unless databases.has_key?(db_name)
+        load_database(db_name) unless databases.key?(db_name)
 
         modules_db_name = app_server['modules-database']
-        load_database(modules_db_name) unless databases.has_key?(modules_db_name)
+        load_database(modules_db_name) unless databases.key?(modules_db_name)
       end
 
       triggers_database = nil
       schema_database = nil
       databases.each_value do |database|
-        if database.has_key?('triggers-database')
+        if database.key?('triggers-database')
           triggers_database = database['triggers-database']
         end
 
-        if database.has_key?('schema-database')
+        if database.key?('schema-database')
           schema_database = database['schema-database']
         end
       end
 
-      if triggers_database && !databases.has_key?(triggers_database)
+      if triggers_database && !databases.key?(triggers_database)
         load_database(triggers_database)
         # databases[triggers_database] = MarkLogic::Database.new(triggers_database, self.connection)
       end
 
-      if schema_database && !databases.has_key?(schema_database)
+      if schema_database && !databases.key?(schema_database)
         load_database(schema_database)
         # databases[schema_database] = MarkLogic::Database.new(schema_database, self.connection)
       end
@@ -264,49 +257,49 @@ module MarkLogic
 
     def build_appservers
       if app_servers.empty?
-        app_servers[@app_name] = MarkLogic::AppServer.new(@app_name, @port, "http", "Default", :connection => self.connection, :admin_connection => admin_connection)
+        app_servers[@app_name] = MarkLogic::AppServer.new(@app_name, @port, 'http', 'Default', connection: connection, admin_connection: admin_connection)
       end
     end
 
     def build_databases
       app_servers.each_value do |app_server|
         db_name = app_server['content-database']
-        unless databases.has_key?(db_name)
-          db = MarkLogic::Database.new(db_name, self.connection)
+        unless databases.key?(db_name)
+          db = MarkLogic::Database.new(db_name, connection)
           db.application = self
           databases[db_name] = db
         end
-        forests[db_name] = MarkLogic::Forest.new(db_name, nil, self.connection) unless forests.has_key?(db_name)
+        forests[db_name] = MarkLogic::Forest.new(db_name, nil, connection) unless forests.key?(db_name)
         forests[db_name].database = databases[db_name]
 
         modules_db_name = app_server['modules-database']
-        unless databases.has_key?(modules_db_name)
-          modules_db = MarkLogic::Database.new(modules_db_name, self.connection)
+        unless databases.key?(modules_db_name)
+          modules_db = MarkLogic::Database.new(modules_db_name, connection)
           modules_db.application = self
           databases[modules_db_name] = modules_db
         end
-        forests[modules_db_name] = MarkLogic::Forest.new(modules_db_name, nil, self.connection) unless forests.has_key?(modules_db_name)
+        forests[modules_db_name] = MarkLogic::Forest.new(modules_db_name, nil, connection) unless forests.key?(modules_db_name)
         forests[modules_db_name].database = databases[modules_db_name]
       end
 
       triggers_database = nil
       schema_database = nil
       databases.each_value do |database|
-        if database.has_key?('triggers-database')
+        if database.key?('triggers-database')
           triggers_database = database['triggers-database']
         end
 
-        if database.has_key?('schema-database')
+        if database.key?('schema-database')
           schema_database = database['schema-database']
         end
       end
 
-      if triggers_database && !databases.has_key?(triggers_database)
-        databases[triggers_database] = MarkLogic::Database.new(triggers_database, self.connection)
+      if triggers_database && !databases.key?(triggers_database)
+        databases[triggers_database] = MarkLogic::Database.new(triggers_database, connection)
       end
 
-      if schema_database && !databases.has_key?(schema_database)
-        databases[schema_database] = MarkLogic::Database.new(schema_database, self.connection)
+      if schema_database && !databases.key?(schema_database)
+        databases[schema_database] = MarkLogic::Database.new(schema_database, connection)
       end
     end
 
@@ -314,7 +307,7 @@ module MarkLogic
       content_databases.each do |database|
         database.reset_indexes
 
-        indexes.clone.each do |key, index|
+        indexes.clone.each do |_key, index|
           index.append_to_db(database)
         end
       end

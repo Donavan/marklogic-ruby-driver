@@ -6,7 +6,7 @@ module MarkLogic
       end
 
       def to_s
-        %Q{cts:document-fragment-query(#{@query})}
+        %{cts:document-fragment-query(#{@query})}
       end
     end
   end

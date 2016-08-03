@@ -16,7 +16,7 @@ module MarkLogic
       'geospatial-element-child-index',
       'geospatial-element-pair-index',
       'geospatial-path-index'
-    ]
+    ].freeze
 
     attr_accessor :database_name, :application
     def initialize(database_name, conn = nil)
@@ -24,8 +24,8 @@ module MarkLogic
 
       @database_name = database_name
       @options = {
-        "database-name" => @database_name,
-        "collection-lexicon" => true
+        'database-name' => @database_name,
+        'collection-lexicon' => true
       }
 
       reset_indexes
@@ -38,7 +38,7 @@ module MarkLogic
     end
 
     def load
-      resp = manage_connection.get(%Q{/manage/v2/databases/#{database_name}/properties?format=json})
+      resp = manage_connection.get(%(/manage/v2/databases/#{database_name}/properties?format=json))
       if resp.code.to_i == 200
         options = Oj.load(resp.body)
         options.each do |key, value|
@@ -50,7 +50,7 @@ module MarkLogic
     def inspect
       as_nice_string = @options.collect do |key, value|
         " #{key}: #{value.inspect}"
-      end.sort.join(",")
+      end.sort.join(',')
       "#<#{self.class}#{as_nice_string}>"
     end
 
@@ -62,9 +62,11 @@ module MarkLogic
       @options[key]
     end
 
-    def has_key?(key)
-      @options.has_key?(key)
+
+    def key?(key)
+      @options.key?(key)
     end
+    alias_method :has_key?, :key?
 
     # def add_database_backup()
     #   @options["database-backups"] <<
@@ -87,43 +89,43 @@ module MarkLogic
     # end
 
     def add_range_element_index(name, options = {})
-      add_index "range-element-index", MarkLogic::DatabaseSettings::RangeElementIndex.new(name, options)
+      add_index 'range-element-index', MarkLogic::DatabaseSettings::RangeElementIndex.new(name, options)
     end
 
     def add_element_word_lexicon(localname, options)
-       add_index "element-word-lexicons", MarkLogic::DatabaseSettings::ElementWordLexicon.new(localname, options)
+      add_index 'element-word-lexicons', MarkLogic::DatabaseSettings::ElementWordLexicon.new(localname, options)
     end
 
-    def add_path_namespace()
+    def add_path_namespace
       # add_index "path-namespace"
     end
 
     def add_range_path_index(path_expression, options = {})
-      add_index "range-path-index", MarkLogic::DatabaseSettings::RangePathIndex.new(path_expression, options)
+      add_index 'range-path-index', MarkLogic::DatabaseSettings::RangePathIndex.new(path_expression, options)
     end
 
-    def add_field()
+    def add_field
       # add_index "fields"
     end
 
     def add_range_field_index(field_name, options = {})
-      add_index "range-field-index", MarkLogic::DatabaseSettings::RangeFieldIndex.new(field_name, options)
+      add_index 'range-field-index', MarkLogic::DatabaseSettings::RangeFieldIndex.new(field_name, options)
     end
 
     def add_geospatial_element_index(element_name, latitude_localname, longitude_localname, options = {})
-       add_index "geospatial-element-index", MarkLogic::DatabaseSettings::GeospatialElementIndex.new(element_name, latitude_localname, longitude_localname, options)
+      add_index 'geospatial-element-index', MarkLogic::DatabaseSettings::GeospatialElementIndex.new(element_name, latitude_localname, longitude_localname, options)
     end
 
     def add_geospatial_element_child_index(element_name, latitude_localname, longitude_localname, options = {})
-      add_index "geospatial-element-child-index", MarkLogic::DatabaseSettings::GeospatialElementChildIndex.new(element_name, latitude_localname, longitude_localname, options)
+      add_index 'geospatial-element-child-index', MarkLogic::DatabaseSettings::GeospatialElementChildIndex.new(element_name, latitude_localname, longitude_localname, options)
     end
 
     def add_geospatial_element_pair_index(element_name, latitude_localname, longitude_localname, options = {})
-      add_index "geospatial-element-pair-index", MarkLogic::DatabaseSettings::GeospatialElementPairIndex(element_name, latitude_localname, longitude_localname, options)
+      add_index 'geospatial-element-pair-index', MarkLogic::DatabaseSettings::GeospatialElementPairIndex(element_name, latitude_localname, longitude_localname, options)
     end
 
     def add_geospatial_path_index(path_expression, latitude_localname, longitude_localname, options = {})
-      add_index "geospatial-path-index", MarkLogic::DatabaseSettings::GeospatialPathIndex.new(path_expression, latitude_localname, longitude_localname, options)
+      add_index 'geospatial-path-index', MarkLogic::DatabaseSettings::GeospatialPathIndex.new(path_expression, latitude_localname, longitude_localname, options)
     end
 
     # def add_foreign_database()
@@ -132,17 +134,18 @@ module MarkLogic
 
     def create
       r = manage_connection.post_json(
-        %Q{/manage/v2/databases?format=json},
-        to_json)
+        %(/manage/v2/databases?format=json),
+        to_json
+      )
     end
 
     def exists?
-      manage_connection.head(%Q{/manage/v2/databases/#{database_name}}).code.to_i  == 200
+      manage_connection.head(%(/manage/v2/databases/#{database_name})).code.to_i == 200
     end
 
     def stale?
-      response = manage_connection.get(%Q{/manage/v2/databases/#{database_name}/properties?format=json})
-      raise Exception.new("Invalid response: #{response.code.to_i}: #{response.body}") if (response.code.to_i != 200)
+      response = manage_connection.get(%(/manage/v2/databases/#{database_name}/properties?format=json))
+      raise Exception, "Invalid response: #{response.code.to_i}: #{response.body}" if response.code.to_i != 200
 
       props = Oj.load(response.body)
 
@@ -154,62 +157,62 @@ module MarkLogic
             logger.debug "#{database_name}: #{local} != #{remote}"
             return true
           end
-        elsif @options.has_key?(key) && @options[key] != []
+        elsif @options.key?(key) && @options[key] != []
           logger.debug "#{database_name}: #{key} is not on the remote end"
           return true
         end
       end
 
-      return false
+      false
     end
 
     def drop
-      r = manage_connection.delete(%Q{/manage/v2/databases/#{database_name}?format=json})
+      r = manage_connection.delete(%(/manage/v2/databases/#{database_name}?format=json))
     end
 
     def to_json
       json = {}
       @options.each do |k, v|
-        if v.kind_of?(Array)
-          value = v.map { |item| item.to_json }
-        else
-          value = v
-        end
+        value = if v.is_a?(Array)
+                  v.map(&:to_json)
+                else
+                  v
+                end
         json[k] = value
       end
       json
     end
 
     def update
-      url = %Q{/manage/v2/databases/#{database_name}/properties?format=json}
+      url = %(/manage/v2/databases/#{database_name}/properties?format=json)
       r = manage_connection.put(url, ::Oj.dump(to_json, mode: :compat))
     end
 
     def reset_indexes
       INDEX_KEYS.each do |key|
         @options[key] = []
-       end
+      end
     end
 
     def add_index(index_type, index)
       @options[index_type] = [] unless @options[index_type]
       @options[index_type] << index
-      @options[index_type].uniq! { |ii| ii.key }
+      @options[index_type].uniq!(&:key)
       application.add_index(index) if application
     end
 
     def range_index(name)
-      @options["range-element-index"].each do |index|
+      @options['range-element-index'].each do |index|
         return index if index.localname == name
       end
     end
 
     def has_range_index?(name)
-      @options["range-element-index"].each do |index|
+      @options['range-element-index'].each do |index|
         return true if index.localname == name
       end
 
-      return false
+      false
     end
 
     def collection(name)
@@ -217,15 +220,15 @@ module MarkLogic
     end
 
     def clear
-      r = connection.delete(%Q{/v1/search})
+      r = connection.delete(%(/v1/search))
     end
 
-    def collections()
-      res = connection.run_query('cts:collections()', "xquery")
+    def collections
+      res = connection.run_query('cts:collections()', 'xquery')
       if res.code.to_i == 200
         return res.body || []
       else
-        raise MissingCollectionLexiconError.new if res.body =~ /XDMP-COLLXCNNOTFOUND/
+        raise MissingCollectionLexiconError if res.body =~ /XDMP-COLLXCNNOTFOUND/
       end
     end
   end

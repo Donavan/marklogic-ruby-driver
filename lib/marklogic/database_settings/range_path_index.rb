@@ -1,7 +1,6 @@
 module MarkLogic
   module DatabaseSettings
     class RangePathIndex
-
       attr_accessor :scalar_type, :collation, :path_expression, :facet
 
       def initialize(path_expression, options = {})
@@ -14,21 +13,21 @@ module MarkLogic
       end
 
       def key
-        %Q{#{self.class.to_s}-#{@localname}}
+        %(#{self.class}-#{@localname})
       end
 
       def append_to_db(database)
-        database.add_index("range-path-index", self)
+        database.add_index('range-path-index', self)
       end
 
-      def to_json(options = nil)
+      def to_json(_options = nil)
         {
-          "range-path-index" => {
-            "scalar-type" => @scalar_type,
-            "collation" => @collation,
-            "path-expression" => @path_expression,
-            "range-value-positions" => @range_value_positions,
-            "invalid-values" => @invalid_values
+          'range-path-index' => {
+            'scalar-type' => @scalar_type,
+            'collation' => @collation,
+            'path-expression' => @path_expression,
+            'range-value-positions' => @range_value_positions,
+            'invalid-values' => @invalid_values
           }
         }
       end

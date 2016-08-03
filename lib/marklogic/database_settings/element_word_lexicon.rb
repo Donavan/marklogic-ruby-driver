@@ -7,19 +7,19 @@ module MarkLogic
       end
 
       def append_to_db(database)
-        database.add_index("element-word-lexicon", self)
+        database.add_index('element-word-lexicon', self)
       end
 
       def key
-        %Q{#{self.class.to_s}-#{@localname}}
+        %(#{self.class}-#{@localname})
       end
 
-      def to_json(options = nil)
+      def to_json(_options = nil)
         {
-          "element-word-lexicon" => {
-            "namespace-uri" => "",
-            "localname" => @localname,
-            "collation" => @collation
+          'element-word-lexicon' => {
+            'namespace-uri' => '',
+            'localname' => @localname,
+            'collation' => @collation
           }
         }
       end

@@ -1,7 +1,6 @@
 module MarkLogic
   module DatabaseSettings
     class GeospatialElementPairIndex
-
       attr_accessor :parent_localname, :latitude_localname, :longitude_localname, :facet
 
       def initialize(element_name, latitude_localname, longitude_localname, options = {})
@@ -15,25 +14,25 @@ module MarkLogic
       end
 
       def key
-        %Q{#{self.class.to_s}-#{@localname}}
+        %(#{self.class}-#{@localname})
       end
 
       def append_to_db(database)
-        database.add_index("geospatial-element-pair-index", self)
+        database.add_index('geospatial-element-pair-index', self)
       end
 
-      def to_json(options = nil)
+      def to_json(_options = nil)
         {
-          "geospatial-element-pair-index" => {
-            "parent-namespace-uri" => "",
-            "parent-localname" => @parent_localname,
-            "latitude-namespace-uri" => "",
-            "latitude-localname" => @latitude_localname,
-            "longitude-namespace-uri" => "",
-            "longitude-localname" => @longitude_localname,
-            "coordinate-system" => @coordinate_system,
-            "range-value-positions" => @range_value_positions,
-            "invalid-values" => @invalid_values
+          'geospatial-element-pair-index' => {
+            'parent-namespace-uri' => '',
+            'parent-localname' => @parent_localname,
+            'latitude-namespace-uri' => '',
+            'latitude-localname' => @latitude_localname,
+            'longitude-namespace-uri' => '',
+            'longitude-localname' => @longitude_localname,
+            'coordinate-system' => @coordinate_system,
+            'range-value-positions' => @range_value_positions,
+            'invalid-values' => @invalid_values
           }
         }
       end

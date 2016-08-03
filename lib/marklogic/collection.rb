@@ -2,15 +2,14 @@ require 'securerandom'
 
 module MarkLogic
   class Collection
-
     attr_accessor :collection
     attr_reader :database
 
-    alias_method :name, :collection
+    alias name collection
     def initialize(name, database)
       @collection = name
       @database = database
-      @operators = %w{GT LT GE LE EQ NE ASC DESC}
+      @operators = %w(GT LT GE LE EQ NE ASC DESC)
     end
 
     def count
@@ -20,61 +19,61 @@ module MarkLogic
     def load(id)
       url = "/v1/documents?uri=#{gen_uri(id)}&format=json"
       response = @database.connection.get(url)
-      raise Exception.new("Invalid response: #{response.code.to_i}, #{response.body}") unless response.code.to_i == 200
+      raise Exception, "Invalid response: #{response.code.to_i}, #{response.body}" unless response.code.to_i == 200
       Oj.load(response.body)
     end
 
     def save(doc)
-      if (doc.is_a?(Array))
+      if doc.is_a?(Array)
         docs = {}
         doc.each do |d|
           docs[doc_uri(d)] = ::Oj.dump(d, mode: :compat)
         end
         body = build_multipart_body(docs)
-        response = @database.connection.post_multipart("/v1/documents", body)
-        raise Exception.new("Invalid response: #{response.code.to_i}, #{response.body}\n") unless response.code.to_i == 200
+        response = @database.connection.post_multipart('/v1/documents', body)
+        raise Exception, "Invalid response: #{response.code.to_i}, #{response.body}\n" unless response.code.to_i == 200
       else
         uri = doc_uri(doc)
         url = "/v1/documents?uri=#{uri}&format=json&collection=#{collection}"
         json = ::Oj.dump(doc, mode: :compat)
         response = @database.connection.put(url, json)
-        raise Exception.new("Invalid response: #{response.code.to_i}, #{response.body}\n") unless [201, 204].include? response.code.to_i
+        raise Exception, "Invalid response: #{response.code.to_i}, #{response.body}\n" unless [201, 204].include? response.code.to_i
         doc[:_id] || doc[:id] || doc['_id'] || doc['id']
       end
     end
 
-    def update(selector, document, opts={})
+    def update(selector, document, _opts = {})
       find(selector).each do |doc|
         document.each do |key, value|
           case key
-          when "$set"
+          when '$set'
             value.each do |kk, vv|
               doc[kk.to_s] = vv
             end
-          when "$inc"
+          when '$inc'
             value.each do |kk, vv|
               prev = doc[kk.to_s] || 0
               doc[kk.to_s] = prev + vv
             end
-          when "$unset"
+          when '$unset'
             value.keys.each do |kk|
               doc.delete(kk.to_s)
             end
-          when "$push"
+          when '$push'
             value.each do |kk, vv|
-              if doc.has_key?(kk.to_s)
+              if doc.key?(kk.to_s)
                 doc[kk.to_s].push(vv)
               else
                 doc[kk.to_s] = [vv]
               end
             end
-          when "$pushAll"
+          when '$pushAll'
             value.each do |kk, vv|
-              if doc.has_key?(kk.to_s)
-                doc[kk.to_s] = doc[kk.to_s] + vv
-              else
-                doc[kk.to_s] = vv
-              end
+              doc[kk.to_s] = if doc.key?(kk.to_s)
+                               doc[kk.to_s] + vv
+                             else
+                               vv
+                             end
             end
           end
           save(doc)
@@ -82,33 +81,33 @@ module MarkLogic
       end
     end
 
-    alias_method :create, :save
-    alias_method :insert, :save
+    alias create save
+    alias insert save
 
-    def remove(query = nil, options = {})
+    def remove(query = nil, _options = {})
       if query.nil? || (query.is_a?(Hash) && query.empty?)
         drop
       else
         if query.class == Hash
           query = from_criteria(query)
         elsif query.nil?
-          query = Queries::AndQuery.new()
+          query = Queries::AndQuery.new
         end
 
-        xqy = %Q{cts:search(fn:collection("#{collection}"), #{query}, ("unfiltered")) / xdmp:node-delete(.)}
-        response = @database.connection.run_query(xqy, "xquery")
-        raise Exception.new("Invalid response: #{response.code.to_i}, #{response.body}") unless response.code.to_i == 200
+        xqy = %{cts:search(fn:collection("#{collection}"), #{query}, ("unfiltered")) / xdmp:node-delete(.)}
+        response = @database.connection.run_query(xqy, 'xquery')
+        raise Exception, "Invalid response: #{response.code.to_i}, #{response.body}" unless response.code.to_i == 200
       end
     end
 
     def drop
       url = "/v1/search?collection=#{collection}"
-      response =@database.connection.delete(url)
-      raise Exception.new("Invalid response: #{response.code.to_i}, #{response.body}") unless [204].include? response.code.to_i
+      response = @database.connection.delete(url)
+      raise Exception, "Invalid response: #{response.code.to_i}, #{response.body}" unless [204].include? response.code.to_i
     end
 
     def find_one(query = nil, options = {})
-      opts = options.merge(:per_page => 1)
+      opts = options.merge(per_page: 1)
       find(query, opts).next
     end
 
@@ -116,7 +115,7 @@ module MarkLogic
       if query.class == Hash
         query = from_criteria(query)
       elsif query.nil?
-        query = Queries::AndQuery.new()
+        query = Queries::AndQuery.new
       end
       options[:query] = query
       cursor = MarkLogic::Cursor.new(self, options)
@@ -130,17 +129,17 @@ module MarkLogic
     end
 
     def build_query(name, operator, value, query_options = {})
-      if database.has_range_index?(name) && (query_options.has_key?(:case_sensitive) == false || query_options[:case_sensitive] == true)
+      if database.has_range_index?(name) && (query_options.key?(:case_sensitive) == false || query_options[:case_sensitive] == true)
         index = database.range_index(name)
         type = index.scalar_type
         Queries::RangeQuery.new(name, operator, type, value, query_options)
       elsif operator != 'EQ'
-        raise MissingIndexError.new("Missing index on #{name}")
+        raise MissingIndexError, "Missing index on #{name}"
       elsif value.nil?
         Queries::OrQuery.new([
-          Queries::ValueQuery.new(name, value, query_options),
-          Queries::NotQuery.new(Queries::ContainerQuery.new(name, Queries::AndQuery.new))
-        ])
+                               Queries::ValueQuery.new(name, value, query_options),
+                               Queries::NotQuery.new(Queries::ContainerQuery.new(name, Queries::AndQuery.new))
+                             ])
       elsif operator == 'EQ'
         Queries::ValueQuery.new(name, value, query_options)
       end
@@ -178,13 +177,13 @@ module MarkLogic
         name, operator, index_type, value = nil
         query_options = {}
 
-        if (v.is_a?(Hash))
+        if v.is_a?(Hash)
           name = k.to_s
           query_options.merge!(v.delete(:options) || {})
 
           sub_queries = []
           v.each do |kk, vv|
-            operator = kk.to_s.gsub('$', '').upcase || "EQ"
+            operator = kk.to_s.delete('$').upcase || 'EQ'
             if @operators.include?(operator)
               value = vv
               value = value.to_s if value.is_a?(MarkLogic::ObjectId)
@@ -205,7 +204,7 @@ module MarkLogic
         else
           name = k.to_s
           value = v
-          operator = "EQ"
+          operator = 'EQ'
           queries << build_query(name, operator, value, query_options)
         end
       end
@@ -218,14 +217,14 @@ module MarkLogic
     end
 
     def to_s
-      %Q{collection: #{collection}}
+      %(collection: #{collection})
     end
 
     def inspect
       as_nice_string = [
         " collection: #{collection.inspect}",
         " database: #{database.database_name.inspect}"
-      ].join(",")
+      ].join(',')
       "#<#{self.class}#{as_nice_string}>"
     end
 
@@ -241,34 +240,34 @@ module MarkLogic
     end
 
     def gen_uri(id)
-      if id.is_a?(Hash)
-        id_str = id.hash.to_s
-      else
-        id_str = id.to_s
-      end
-      %Q{/#{collection}/#{id_str}.json}
+      id_str = if id.is_a?(Hash)
+                 id.hash.to_s
+               else
+                 id.to_s
+               end
+      %(/#{collection}/#{id_str}.json)
     end
 
-    def build_multipart_body(docs, boundary = "BOUNDARY")
-      tmp = ""
+    def build_multipart_body(docs, boundary = 'BOUNDARY')
+      tmp = ''
 
       # collection
-      metadata = ::Oj.dump({ collections: [ collection ]}, mode: :compat)
-      tmp << %Q{--#{boundary}\r\n}
-      tmp << %Q{Content-Type: application/json\r\n}
-      tmp << %Q{Content-Disposition: inline; category=metadata\r\n}
-      tmp << %Q{Content-Length: #{metadata.size}\r\n\r\n}
+      metadata = ::Oj.dump({ collections: [collection] }, mode: :compat)
+      tmp << %(--#{boundary}\r\n)
+      tmp << %(Content-Type: application/json\r\n)
+      tmp << %(Content-Disposition: inline; category=metadata\r\n)
+      tmp << %(Content-Length: #{metadata.size}\r\n\r\n)
       tmp << metadata
-      tmp << %Q{\r\n}
+      tmp << %(\r\n)
 
       docs.each do |uri, doc|
         # doc
-        tmp << %Q{--#{boundary}\r\n}
-        tmp << %Q{Content-Type: application/json\r\n}
-        tmp << %Q{Content-Disposition: attachment; filename="#{uri}"; category=content; format=json\r\n}
-        tmp << %Q{Content-Length: #{doc.size}\r\n\r\n}
+        tmp << %(--#{boundary}\r\n)
+        tmp << %(Content-Type: application/json\r\n)
+        tmp << %(Content-Disposition: attachment; filename="#{uri}"; category=content; format=json\r\n)
+        tmp << %(Content-Length: #{doc.size}\r\n\r\n)
         tmp << doc
-        tmp << %Q{\r\n}
+        tmp << %(\r\n)
       end
       tmp << "--#{boundary}--"
       tmp

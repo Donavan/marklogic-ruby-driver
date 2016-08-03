@@ -1,7 +1,6 @@
 module MarkLogic
   module DatabaseSettings
     class GeospatialPathIndex
-
       attr_accessor :path_expression, :facet
 
       def initialize(path_expression, options = {})
@@ -14,21 +13,21 @@ module MarkLogic
       end
 
       def key
-        %Q{#{self.class.to_s}-#{@localname}}
+        %(#{self.class}-#{@localname})
       end
 
       def append_to_db(database)
-        database.add_index("geospatial-path-index", self)
+        database.add_index('geospatial-path-index', self)
       end
 
-      def to_json(options = nil)
+      def to_json(_options = nil)
         {
-          "geospatial-path-index" => {
-            "path-expression" => @path_expression,
-            "coordinate-system" => @coordinate_system,
-            "point-format" => @point_format,
-            "range-value-positions" => @range_value_positions,
-            "invalid-values" => @invalid_values
+          'geospatial-path-index' => {
+            'path-expression' => @path_expression,
+            'coordinate-system' => @coordinate_system,
+            'point-format' => @point_format,
+            'range-value-positions' => @range_value_positions,
+            'invalid-values' => @invalid_values
           }
         }
       end

@@ -1,6 +1,6 @@
 module MarkLogic
   module Queries
-    class DirectoryQuery< BaseQuery
+    class DirectoryQuery < BaseQuery
       def initialize(uris, depth = nil)
         @directory_uris = uris
         @depth = depth
@@ -10,9 +10,9 @@ module MarkLogic
         uris = query_value(@directory_uris)
 
         if @depth.nil?
-          %Q{cts:directory-query((#{uris}))}
+          %{cts:directory-query((#{uris}))}
         else
-          %Q{cts:directory-query((#{uris}),"#{@depth}")}
+          %{cts:directory-query((#{uris}),"#{@depth}")}
         end
       end
     end

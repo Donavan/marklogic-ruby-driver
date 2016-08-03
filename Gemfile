@@ -14,4 +14,6 @@ group :development do
   gem 'terminal-notifier-guard', require: false
   gem 'guard-rspec'
   gem 'guard-yard'
+
+  gem 'rubocop', require: false
 end

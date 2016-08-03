@@ -1,7 +1,6 @@
 module MarkLogic
   module DatabaseSettings
     class GeospatialElementIndex
-
       attr_accessor :localname, :facet
 
       def initialize(element_name, options = {})
@@ -14,22 +13,22 @@ module MarkLogic
       end
 
       def key
-        %Q{#{self.class.to_s}-#{@localname}}
+        %(#{self.class}-#{@localname})
       end
 
       def append_to_db(database)
-        database.add_index("geospatial-element-index", self)
+        database.add_index('geospatial-element-index', self)
       end
 
-      def to_json(options = nil)
+      def to_json(_options = nil)
         {
-          "geospatial-element-index" => {
-            "namespace-uri" => "",
-            "localname" => @localname,
-            "coordinate-system" => @coordinate_system,
-            "point-format" => @point_format,
-            "range-value-positions" => @range_value_positions,
-            "invalid-values" => @invalid_values
+          'geospatial-element-index' => {
+            'namespace-uri' => '',
+            'localname' => @localname,
+            'coordinate-system' => @coordinate_system,
+            'point-format' => @point_format,
+            'range-value-positions' => @range_value_positions,
+            'invalid-values' => @invalid_values
           }
         }
       end

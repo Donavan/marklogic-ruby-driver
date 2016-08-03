@@ -7,7 +7,7 @@ module MarkLogic
       end
 
       def to_s
-        %Q{cts:and-not-query(#{@positive_query},#{@negative_query})}
+        %{cts:and-not-query(#{@positive_query},#{@negative_query})}
       end
     end
   end

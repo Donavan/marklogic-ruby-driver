@@ -5,7 +5,7 @@ module MarkLogic
         @element = element
         @search_value = search_value.nil? ? '*' : search_value
         options << 'wildcarded' if @search_value == '*' && !options.include?('wildcarded')
-        @options = options.map{ |o| query_value(o.to_s) }
+        @options = options.map { |o| query_value(o.to_s) }
         @weight = weight
       end
 

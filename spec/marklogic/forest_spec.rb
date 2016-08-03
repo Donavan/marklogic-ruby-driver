@@ -1,23 +1,22 @@
 require 'spec_helper'
 
 describe MarkLogic::Forest do
-
-  describe "#init" do
+  describe '#init' do
     let(:forest) do
-      MarkLogic::Forest.new("marklogic-gem-test")
+      MarkLogic::Forest.new('marklogic-gem-test')
     end
 
-    it "should create accessors" do
-      expect(forest.forest_name).to eq("marklogic-gem-test")
+    it 'should create accessors' do
+      expect(forest.forest_name).to eq('marklogic-gem-test')
     end
   end
 
-  describe "#create" do
+  describe '#create' do
     before do
-      @forest = MarkLogic::Forest.new("marklogic-gem-test")
+      @forest = MarkLogic::Forest.new('marklogic-gem-test')
     end
 
-    it "should create a forest" do
+    it 'should create a forest' do
       expect(@forest).to_not be_exists
       @forest.create
       expect(@forest).to be_exists
@@ -25,6 +24,5 @@ describe MarkLogic::Forest do
       @forest.drop
       expect(@forest).to_not be_exists
     end
-
   end
 end

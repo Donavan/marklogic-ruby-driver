@@ -7,7 +7,7 @@ require 'net/http/persistent'
 module Net
   module HTTPHeader
     @@nonce_count = -1
-    CNONCE = Digest::MD5.hexdigest "%x" % (Time.now.to_i + rand(65535))
+    CNONCE = Digest::MD5.hexdigest '%x' % (Time.now.to_i + rand(65_535))
 
     def create_digest_auth(user, password, response)
       # based on http://segment7.net/projects/ruby/snippets/digest_auth.rb
@@ -16,13 +16,12 @@ module Net
       response['www-authenticate'] =~ /^(\w+) (.*)/
 
       params = {}
-      $2.gsub(/(\w+)="(.*?)"/) { params[$1] = $2 }
+      Regexp.last_match(2).gsub(/(\w+)="(.*?)"/) { params[Regexp.last_match(1)] = Regexp.last_match(2) }
 
       digest_auth(user, password, params)
     end
 
     def digest_auth(user, password, params)
-
       a_1 = "#{user}:#{params['realm']}:#{password}"
       a_2 = "#{@method}:#{@path}"
       request_digest = ''
@@ -39,7 +38,7 @@ module Net
 
       header << "qop=#{params['qop']}"
 
-      header << "algorithm=MD5"
+      header << 'algorithm=MD5'
       header << "uri=\"#{@path}\""
       header << "nonce=\"#{params['nonce']}\""
       header << "nc=#{'%08x' % @@nonce_count}"
@@ -71,7 +70,7 @@ module MarkLogic
     DOUBLE_NEWLINE_SPLITTER = Regexp.new("\r\n\r\n", Regexp::MULTILINE)
     START_BOUNDARY_REGEX = Regexp.new("^[\r\n]+--[^-].+?[\r\n]+", Regexp::MULTILINE)
     END_BOUNDARY_REGEX = Regexp.new("[\r\n]+--[^-]+--[\r\n]+$", Regexp::MULTILINE)
-    BOUNDARY_SPLITTER_REGEX = Regexp.new(%Q{[\r\n]+--[^-]+[\r\n]+}, Regexp::MULTILINE)
+    BOUNDARY_SPLITTER_REGEX = Regexp.new(%([\r\n]+--[^-]+[\r\n]+), Regexp::MULTILINE)
     CONTENT_TYPE_REGEX = /Content-Type:\s+(.*)$/
     PRIMITIVE_REGEX = /X-Primitive:\s+(.*)$/
 
@@ -87,15 +86,15 @@ module MarkLogic
     end
 
     def self.default_user
-      @@__default_user ||= "admin"
+      @@__default_user ||= 'admin'
     end
 
     def self.default_password
-      @@__default_password ||= "admin"
+      @@__default_password ||= 'admin'
     end
 
     def self.host_name
-      @@__host_name ||= "localhost"
+      @@__host_name ||= 'localhost'
     end
 
     def self.app_services_port
@@ -110,21 +109,19 @@ module MarkLogic
       @@__manage_port ||= 8002
     end
 
-    def self.admin_connection(username = self.default_user, password = self.default_password)
-      @@__admin_connection ||= Connection.new(self.host_name, self.admin_port, username, password)
+    def self.admin_connection(username = default_user, password = default_password)
+      @@__admin_connection ||= Connection.new(host_name, admin_port, username, password)
     end
 
-    def self.manage_connection(username = self.default_user, password = self.default_password)
-      @@__manage_connection ||= Connection.new(self.host_name, self.manage_port, username, password)
+    def self.manage_connection(username = default_user, password = default_password)
+      @@__manage_connection ||= Connection.new(host_name, manage_port, username, password)
     end
 
-    def self.app_services_connection(username = self.default_user, password = self.default_password)
-      @@__app_services_connection ||= Connection.new(self.host_name, self.app_services_port, username, password)
+    def self.app_services_connection(username = default_user, password = default_password)
+      @@__app_services_connection ||= Connection.new(host_name, app_services_port, username, password)
     end
 
-    def host
-      @host
-    end
+    attr_reader :host
 
     attr_accessor :verbose
 
@@ -138,35 +135,35 @@ module MarkLogic
       @verbose = options[:verbose] == true || false
     end
 
-    def run_query(query, type = "javascript", options = {})
+    def run_query(query, type = 'javascript', options = {})
       # manually building the params yielded a performance improvement
-      params = %Q{#{type}=#{URI.encode_www_form_component(query)}}
-      params += %Q{&dbname=#{options[:db]}} if options[:db]
+      params = %(#{type}=#{URI.encode_www_form_component(query)})
+      params += %(&dbname=#{options[:db]}) if options[:db]
 
       headers = {
         'content-type' => 'application/x-www-form-urlencoded'
       }
 
-      logger.debug(%Q{MarkLogic (#{type}):  #{query}})
+      logger.debug(%{MarkLogic (#{type}):  #{query}})
       response = request('/eval', 'post', headers, params)
 
-        # :xquery => options[:query],
-        # :locale => LOCALE,
-        # :tzoffset => "-18000",
-        # :dbname => options[:db]
+      # :xquery => options[:query],
+      # :locale => LOCALE,
+      # :tzoffset => "-18000",
+      # :dbname => options[:db]
     end
 
     def run_xquery(xquery, options = {})
       # manually building the params yielded a performance improvement
       query = xquery.to_s
-      params = %Q{xquery=#{URI.encode_www_form_component(query)}}
-      params += %Q{&dbname=#{options[:db]}} if options[:db]
+      params = %(xquery=#{URI.encode_www_form_component(query)})
+      params += %(&dbname=#{options[:db]}) if options[:db]
 
       headers = {
-          'content-type' => 'application/x-www-form-urlencoded'
+        'content-type' => 'application/x-www-form-urlencoded'
       }
 
-      logger.debug(%Q{MarkLogic (xquery):  #{query}})
+      logger.debug(%{MarkLogic (xquery):  #{query}})
       response = request('/eval', 'post', headers, params)
 
       # :xquery => options[:query],
@@ -195,9 +192,9 @@ module MarkLogic
       request(url, 'post', headers, ::Oj.dump(params, mode: :compat))
     end
 
-    def post_multipart(url, body = nil, headers = {}, boundary = "BOUNDARY")
-      headers['Content-Type'] = %Q{multipart/mixed; boundary=#{boundary}}
-      headers['Accept'] = %Q{application/json}
+    def post_multipart(url, body = nil, headers = {}, boundary = 'BOUNDARY')
+      headers['Content-Type'] = %(multipart/mixed; boundary=#{boundary})
+      headers['Accept'] = %(application/json)
       request(url, 'post', headers, body)
     end
 
@@ -207,29 +204,29 @@ module MarkLogic
 
     def wait_for_restart(body)
       json = Oj.load(body)
-      ts_value = json["restart"]["last-startup"][0]["value"]
+      ts_value = json['restart']['last-startup'][0]['value']
       timestamp = DateTime.iso8601(ts_value).to_time
       new_timestamp = timestamp
 
       code = nil
-      logger.debug "Waiting for restart"
+      logger.debug 'Waiting for restart'
       until code == 200 && new_timestamp > timestamp
         begin
-          rr = get(%Q{/admin/v1/timestamp})
+          rr = get(%(/admin/v1/timestamp))
           code = rr.code.to_i
           bb = rr.body
           new_timestamp = DateTime.iso8601(bb).to_time if code == 200
         rescue
         end
       end
-      logger.debug "Restart Complete"
+      logger.debug 'Restart Complete'
     end
 
     def ==(other)
       @host == other.host &&
-      @port == other.port &&
-      @username == other.username &&
-      @password == other.password
+        @port == other.port &&
+        @username == other.username &&
+        @password == other.password
     end
 
     private
@@ -246,17 +243,17 @@ module MarkLogic
     def split_multipart(response)
       body = response.body
 
-      if body.nil? || body.length == 0
+      if body.nil? || body.length.zero?
         response.body = nil
         return
       end
 
       content_type = response['Content-Type']
-      if (content_type && content_type.match(/multipart\/mixed.*/))
-        boundary = $1 if content_type =~ /^.*boundary=(.*)$/
+      if content_type && content_type.match(/multipart\/mixed.*/)
+        boundary = Regexp.last_match(1) if content_type =~ /^.*boundary=(.*)$/
 
-        body.sub!(END_BOUNDARY_REGEX, "")
-        body.sub!(START_BOUNDARY_REGEX, "")
+        body.sub!(END_BOUNDARY_REGEX, '')
+        body.sub!(START_BOUNDARY_REGEX, '')
 
         values = []
         body.split(BOUNDARY_SPLITTER_REGEX).each do |item|
@@ -268,32 +265,30 @@ module MarkLogic
 
           metas.split(NEWLINE_SPLITTER).each do |meta|
             if meta =~ CONTENT_TYPE_REGEX
-              value_content_type = $1
+              value_content_type = Regexp.last_match(1)
             elsif meta =~ PRIMITIVE_REGEX
-              type = $1
+              type = Regexp.last_match(1)
             end
           end
 
-          if (value_content_type == "application/json") then
+          if value_content_type == 'application/json'
             value = Oj.load(raw_value)
           else
-            case type
-            when "integer"
-              value = raw_value.to_i
-            when "boolean"
-              value = raw_value == "true"
-            when "decimal"
-              value = raw_value.to_f
-            else
-              value = raw_value
-            end
+            value = case type
+                    when 'integer'
+                      raw_value.to_i
+                    when 'boolean'
+                      raw_value == 'true'
+                    when 'decimal'
+                      raw_value.to_f
+                    else
+                      raw_value
+                    end
           end
           values.push(value)
         end
 
-        if (values.length == 1)
-          values = values[0]
-        end
+        values = values[0] if values.length == 1
         output = values
       else
         output = body
@@ -304,7 +299,7 @@ module MarkLogic
     def request(url, verb = 'get', headers = {}, body = nil, params = nil)
       tries ||= request_retries
 
-      logger.debug "Retry #{request_retries - tries} of #{request_retries} for:\n#{body}" unless (tries == request_retries)
+      logger.debug "Retry #{request_retries - tries} of #{request_retries} for:\n#{body}" unless tries == request_retries
       all_headers = {}
 
       # configure headers
@@ -315,28 +310,26 @@ module MarkLogic
       request = Net::HTTP.const_get(verb.capitalize).new(url, all_headers)
 
       # Send the auth info if we have it
-      if @auth
-        request.digest_auth(@username, @password, @auth)
-      end
+      request.digest_auth(@username, @password, @auth) if @auth
 
       if params
         # query = URI.encode_www_form(params)
         # query.gsub!(/&/, sep) if sep != '&'
         # self.body = query
         # request['content-type'] = 'application/x-www-form-urlencoded'
-        request.set_form_data(params) if (params)
+        request.set_form_data(params) if params
       elsif body
-        request.body = body if (body)
+        request.body = body if body
       end
 
       full_url = URI("http://#{@host}:#{@port}#{url}")
       response = @http.request full_url, request
 
-      if (response.code.to_i == 401 && @username && @password)
-        auth_method = $1.downcase if response['www-authenticate'] =~ /^(\w+) (.*)/
-        if (auth_method == "basic")
+      if response.code.to_i == 401 && @username && @password
+        auth_method = Regexp.last_match(1).downcase if response['www-authenticate'] =~ /^(\w+) (.*)/
+        if auth_method == 'basic'
           request.basic_auth(@username, @password)
-        elsif (auth_method == "digest")
+        elsif auth_method == 'digest'
           @auth = request.create_digest_auth(@username, @password, response)
         end
 
