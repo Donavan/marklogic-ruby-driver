@@ -1,4 +1,5 @@
 module MarkLogic
+  # Represents a MarkLogic application server
   class AppServer
     include MarkLogic::Persistence
 
@@ -35,11 +36,10 @@ module MarkLogic
 
     def load
       resp = manage_connection.get(%(/manage/v2/servers/#{server_name}/properties?group-id=#{group_name}&format=json))
-      if resp.code.to_i == 200
-        options = Oj.load(resp.body)
-        options.each do |key, value|
-          self[key] = value
-        end
+      return resp unless resp.code.to_i == 200
+      options = Oj.load(resp.body)
+      options.each do |key, value|
+        self[key] = value
       end
     end
 
@@ -60,12 +60,12 @@ module MarkLogic
       @options[key]
     end
 
-    def has_key?(key)
+    def key?(key)
       @options.key?(key)
     end
 
     def create
-      r = manage_connection.post_json(
+      manage_connection.post_json(
         %(/manage/v2/servers/?group-id=#{group_name}&server-type=#{server_type}&format=json),
         @options
       )
