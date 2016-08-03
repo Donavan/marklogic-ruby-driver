@@ -1,5 +1,6 @@
 module MarkLogic
   module Queries
+    # See: https://docs.marklogic.com/cts:collection-query
     class CollectionQuery < BaseQuery
       def initialize(collection_uris)
         @collection_uris = collection_uris

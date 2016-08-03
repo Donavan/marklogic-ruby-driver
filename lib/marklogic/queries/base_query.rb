@@ -1,5 +1,6 @@
 module MarkLogic
   module Queries
+    # Base class for MarkLogic queries
     class BaseQuery
       alias to_xqy to_s
       #

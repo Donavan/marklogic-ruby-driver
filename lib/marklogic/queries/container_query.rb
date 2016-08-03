@@ -1,5 +1,6 @@
 module MarkLogic
   module Queries
+    # see: https://docs.marklogic.com/cts:json-property-scope-query
     class ContainerQuery < BaseQuery
       def initialize(name, query, options = {})
         @name = name

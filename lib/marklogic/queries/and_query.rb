@@ -1,5 +1,6 @@
 module MarkLogic
   module Queries
+    # See: https://docs.marklogic.com/cts:and-query
     class AndQuery < BaseQuery
       def initialize(*args)
         @queries = args.flat_map { |i| i }

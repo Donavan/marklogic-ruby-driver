@@ -1,5 +1,6 @@
 module MarkLogic
   module Queries
+    # See: https://docs.marklogic.com/cts:boost-query
     class BoostQuery < BaseQuery
       def initialize(matching_query, boosting_query)
         @matching_query = matching_query
