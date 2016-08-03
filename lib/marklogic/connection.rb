@@ -145,7 +145,7 @@ module MarkLogic
       }
 
       logger.debug(%{MarkLogic (#{type}):  #{query}})
-      response = request('/eval', 'post', headers, params)
+      request('/eval', 'post', headers, params)
 
       # :xquery => options[:query],
       # :locale => LOCALE,
@@ -164,7 +164,7 @@ module MarkLogic
       }
 
       logger.debug(%{MarkLogic (xquery):  #{query}})
-      response = request('/eval', 'post', headers, params)
+      request('/eval', 'post', headers, params)
 
       # :xquery => options[:query],
       # :locale => LOCALE,
@@ -250,7 +250,8 @@ module MarkLogic
 
       content_type = response['Content-Type']
       if content_type && content_type.match(/multipart\/mixed.*/)
-        boundary = Regexp.last_match(1) if content_type =~ /^.*boundary=(.*)$/
+        # TODO: How was boundry intended to be used?
+        # boundary = Regexp.last_match(1) if content_type =~ /^.*boundary=(.*)$/
 
         body.sub!(END_BOUNDARY_REGEX, '')
         body.sub!(START_BOUNDARY_REGEX, '')
@@ -342,7 +343,7 @@ module MarkLogic
 
       split_multipart(response)
       response
-    rescue Net::ReadTimeout => e
+    rescue Net::ReadTimeout
       retry unless (tries -= 1).zero?
     end
   end

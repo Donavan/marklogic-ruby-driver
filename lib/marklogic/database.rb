@@ -133,7 +133,7 @@ module MarkLogic
     # end
 
     def create
-      r = manage_connection.post_json(
+      manage_connection.post_json(
         %(/manage/v2/databases?format=json),
         to_json
       )
@@ -167,7 +167,7 @@ module MarkLogic
     end
 
     def drop
-      r = manage_connection.delete(%(/manage/v2/databases/#{database_name}?format=json))
+      manage_connection.delete(%(/manage/v2/databases/#{database_name}?format=json))
     end
 
     def to_json
@@ -185,7 +185,7 @@ module MarkLogic
 
     def update
       url = %(/manage/v2/databases/#{database_name}/properties?format=json)
-      r = manage_connection.put(url, ::Oj.dump(to_json, mode: :compat))
+      manage_connection.put(url, ::Oj.dump(to_json, mode: :compat))
     end
 
     def reset_indexes
@@ -220,7 +220,7 @@ module MarkLogic
     end
 
     def clear
-      r = connection.delete(%(/v1/search))
+      connection.delete(%(/v1/search))
     end
 
     def collections

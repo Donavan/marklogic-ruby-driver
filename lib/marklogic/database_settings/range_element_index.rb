@@ -24,8 +24,8 @@ module MarkLogic
       def ==(other)
         self.class == other.class &&
           scalar_type == other.scalar_type &&
-          (localname = other.localname) &&
-          (namespace_uri = other.namespace_uri) &&
+          (localname == other.localname) &&
+          (namespace_uri == other.namespace_uri) &&
           collation == other.collation &&
           range_value_positions == other.range_value_positions &&
           invalid_values == other.invalid_values

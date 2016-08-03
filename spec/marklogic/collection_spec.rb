@@ -157,6 +157,7 @@ describe MarkLogic::Collection do
       save_ten
       expect(@collection.count).to eq 10
       c = @collection.find_one(_id: 1)
+      expect(c['_id']).to eq(1)
       c = @collection.find_one(@collection.from_criteria(_id: 1))
       expect(c['_id']).to eq(1)
     end

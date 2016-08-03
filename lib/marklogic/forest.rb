@@ -47,7 +47,7 @@ module MarkLogic
     end
 
     def create
-      r = manage_connection.post_json(
+      manage_connection.post_json(
         %(/manage/v2/forests?format=json),
         @options
       )
@@ -58,7 +58,7 @@ module MarkLogic
     end
 
     def drop
-      r = manage_connection.delete(%(/manage/v2/forests/#{forest_name}?level=full&format=json))
+      manage_connection.delete(%(/manage/v2/forests/#{forest_name}?level=full&format=json))
     end
   end
 end
