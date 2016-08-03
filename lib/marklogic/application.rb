@@ -1,4 +1,5 @@
 module MarkLogic
+  # Represents an application on a MarkLogic server
   class Application
     include MarkLogic::Persistence
 
@@ -16,37 +17,14 @@ module MarkLogic
 
       build_implicit_defs
 
-      databases.each do |_database_name, database|
-        if database.exists?
-          database.update
-        else
-          database.create
-        end
-      end
-
-      forests.each do |_forest_name, forest|
-        forest.create unless forest.exists?
-      end
-
-      app_servers.each do |_server_name, app_server|
-        if app_server.exists?
-          app_server.update
-        else
-          app_server.create
-        end
-      end
+      update_or_create_databases
+      create_forests
+      update_or_create_app_servers
     end
 
     def create_indexes
       build_implicit_defs
-
-      content_databases.each do |database|
-        if database.exists?
-          database.update
-        else
-          database.create
-        end
-      end
+      update_or_create_databases
     end
 
     def sync
@@ -95,36 +73,16 @@ module MarkLogic
 
     def stale?
       build_implicit_defs
-
-      databases.each do |database_name, database|
-        unless database.exists?
-          logger.debug "database: #{database_name} is missing"
-          return true
-        end
-      end
-
-      content_databases.each do |database|
-        if database.stale?
-          logger.debug "database: #{database.database_name} is stale"
-          return true
-        end
-      end
-
-      forests.each do |forest_name, forest|
-        unless forest.exists?
-          logger.debug "forest: #{forest_name} is missing"
-          return true
-        end
-      end
-
-      app_servers.each do |server_name, app_server|
-        unless app_server.exists?
-          logger.debug "app_server: #{server_name} is missing"
-          return true
-        end
-      end
-
+      return true if stale_check(:databases) || stale_content_databases? || stale_check(:forests) || stale_check(:app_servers)
       false
+    end
+
+    def stale_content_databases?
+      content_databases.any?(&:stale?)
+    end
+
+    def stale_check(what)
+      send(what).any? { |_name, obj| !obj.exists? }
     end
 
     def forests
@@ -179,11 +137,7 @@ module MarkLogic
     end
 
     def inspect
-      as_nice_string = [
-        " app_name: #{app_name.inspect}",
-        " port: #{port.inspect}",
-        " app_servers: #{app_servers.values.each(&:inspect)}"
-      ].join(',')
+      as_nice_string = " app_name: #{app_name.inspect} port: #{port.inspect} app_servers: #{app_servers.values.each(&:inspect)}"
       "#<#{self.class}#{as_nice_string}>"
     end
 
@@ -202,6 +156,32 @@ module MarkLogic
 
     private
 
+    def update_or_create_databases
+      databases.each do |_database_name, database|
+        if database.exists?
+          database.update
+        else
+          database.create
+        end
+      end
+    end
+
+    def create_forests
+      forests.each do |_forest_name, forest|
+        forest.create unless forest.exists?
+      end
+    end
+
+    def update_or_create_app_servers
+      app_servers.each do |_server_name, app_server|
+        if app_server.exists?
+          app_server.update
+        else
+          app_server.create
+        end
+      end
+    end
+
     def load_database(db_name)
       db = MarkLogic::Database.load(db_name, connection)
       db.application = self
@@ -215,13 +195,24 @@ module MarkLogic
 
     def load_databases
       app_servers.each_value do |app_server|
-        db_name = app_server['content-database']
-        load_database(db_name) unless databases.key?(db_name)
-
-        modules_db_name = app_server['modules-database']
-        load_database(modules_db_name) unless databases.key?(modules_db_name)
+        load_if_needed(app_server['content-database'])
+        load_if_needed(app_server['modules-database'])
       end
 
+      triggers_database, schema_database = trigger_and_schema_names
+      load_if_needed(triggers_database)
+      load_if_needed(schema_database)
+    end
+
+    def load_if_needed(key)
+      load_database(key) if load_needed?(key)
+    end
+
+    def load_needed?(key)
+      key && !databases.key?(key)
+    end
+
+    def trigger_and_schema_names
       triggers_database = nil
       schema_database = nil
       databases.each_value do |database|
@@ -233,16 +224,7 @@ module MarkLogic
           schema_database = database['schema-database']
         end
       end
-
-      if triggers_database && !databases.key?(triggers_database)
-        load_database(triggers_database)
-        # databases[triggers_database] = MarkLogic::Database.new(triggers_database, self.connection)
-      end
-
-      if schema_database && !databases.key?(schema_database)
-        load_database(schema_database)
-        # databases[schema_database] = MarkLogic::Database.new(schema_database, self.connection)
-      end
+      [triggers_database, schema_database]
     end
 
     def indexes
@@ -256,51 +238,48 @@ module MarkLogic
     end
 
     def build_appservers
-      if app_servers.empty?
-        app_servers[@app_name] = MarkLogic::AppServer.new(@app_name, @port, 'http', 'Default', connection: connection, admin_connection: admin_connection)
-      end
+      return unless app_servers.empty?
+      app_servers[@app_name] = MarkLogic::AppServer.new(@app_name, @port, 'http', 'Default', connection: connection, admin_connection: admin_connection)
     end
 
     def build_databases
       app_servers.each_value do |app_server|
         db_name = app_server['content-database']
-        unless databases.key?(db_name)
-          db = MarkLogic::Database.new(db_name, connection)
-          db.application = self
-          databases[db_name] = db
-        end
-        forests[db_name] = MarkLogic::Forest.new(db_name, nil, connection) unless forests.key?(db_name)
-        forests[db_name].database = databases[db_name]
+        build_db_if_needed(db_name)
+        new_forest(db_name)
 
         modules_db_name = app_server['modules-database']
-        unless databases.key?(modules_db_name)
-          modules_db = MarkLogic::Database.new(modules_db_name, connection)
-          modules_db.application = self
-          databases[modules_db_name] = modules_db
-        end
-        forests[modules_db_name] = MarkLogic::Forest.new(modules_db_name, nil, connection) unless forests.key?(modules_db_name)
-        forests[modules_db_name].database = databases[modules_db_name]
+        build_module_db_if_needed(modules_db_name)
+        new_forest(modules_db_name)
       end
 
-      triggers_database = nil
-      schema_database = nil
-      databases.each_value do |database|
-        if database.key?('triggers-database')
-          triggers_database = database['triggers-database']
-        end
+      build_trigger_schema_databases
+    end
 
-        if database.key?('schema-database')
-          schema_database = database['schema-database']
-        end
-      end
+    def new_forest(key)
+      forests[key] = MarkLogic::Forest.new(key, nil, connection) unless forests.key?(key)
+      forests[key].database = databases[key]
+    end
 
-      if triggers_database && !databases.key?(triggers_database)
-        databases[triggers_database] = MarkLogic::Database.new(triggers_database, connection)
-      end
+    def build_db_if_needed(db_name)
+      return if db_name.nil? || databases.key?(db_name)
 
-      if schema_database && !databases.key?(schema_database)
-        databases[schema_database] = MarkLogic::Database.new(schema_database, connection)
-      end
+      db = MarkLogic::Database.new(db_name, connection)
+      db.application = self
+      databases[db_name] = db
+    end
+
+    def build_module_db_if_needed(modules_db_name)
+      return if databases.key?(modules_db_name)
+      modules_db = MarkLogic::Database.new(modules_db_name, connection)
+      modules_db.application = self
+      databases[modules_db_name] = modules_db
+    end
+
+    def build_trigger_schema_databases
+      triggers_database, schema_database = trigger_and_schema_names
+      build_db_if_needed(triggers_database)
+      build_db_if_needed(schema_database)
     end
 
     def build_indexes
